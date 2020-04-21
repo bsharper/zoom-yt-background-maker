@@ -1,0 +1,43 @@
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  label[for="yturl"] {
+    float:right; 
+    margin-top: 6px
+  }
+  .invert {
+    background-color: black;
+    color: white;
+  }
+  .small-hero {
+    padding-bottom: 2rem;
+    padding-top: 2rem;
+  }
+  .output {
+    padding-left: 10px;
+  }
+  .status-progress {
+    width: 90%;
+  }
+  #status {
+    width: 100%;
+  }
+  .container {
+    padding: 0;
+  }
+  .nopad {
+    padding: 0;
+  }
+  .loading-status {
+    float:left; 
+    margin-left: 20px; 
+    margin-top: 6px;
+    display:none;
+  }
+  .brag {
+    background-color: rgb(43, 150, 245);
+    color: white;
+    font-size: 0.8em;
+  }
+  

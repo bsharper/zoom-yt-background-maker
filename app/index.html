@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+
+    <title>ZoomTube</title>
+    <link rel="stylesheet" href="css/spectre.css">
+    <link rel="stylesheet" href="css/spectre-icons.css">
+    <link rel="stylesheet" href="css/main.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="column">
+        <div class="hero text-center small-hero">
+          <div class="hero-body">
+            <h1>ZoomTube <img src="./img/logo_sm.png"></h1> 
+            <p>YouTube Zoom Background Maker thingy</p>
+            <span class="label label-rounded brag">by Brian Harper @bsharper</span>
+          </div>
+        </div>
+      </div>
+      <div class="column nopad">
+        <form class="form-horizontal bg-gray">
+          <div class="form-group">
+            <div class="column col-2">
+              <label class="label-lg" for="yturl">URL</label>
+            </div>
+            <div id="urltooltip" class="column col-8 tooltip tooltip-top" data-tooltip="Enter a valid YouTube URL here">
+              <div class="has-icon-left">
+                <input type="text" id="yturl" class="form-input" placeholder="https://youtu.be/dQw4w9WgXcQ">
+                <i id="urlicon" class="form-icon icon icon-arrow-right"></i>
+              </div>
+            </div>
+            <div class="col-2 text-center">
+              <button id="start" href="javascript:return false;" onclick="return false" data-tooltip="Enter a valid YouTube URL before clicking start" class="btn tooltip tooltip-left disabled">Start</button>
+              <button id="reload" href="javascript:return false;" style="display: none";" onclick="window.location.reload(); return false" class="btn">Start again</button>
+            </div>
+          </div>
+          
+        </form>
+      </div>
+      <div class="col-12">
+        
+        <ul class="step">
+          <li id="wait-step" class="step-item active">
+            <a href="#" class="tooltip" data-tooltip="Enter YouTube URL">Enter YouTube URL</a>
+          </li>
+          <li id="download-step" class="step-item">
+            <a href="#" class="tooltip" data-tooltip="Downloading video">Downloading video</a>
+          </li>
+          <li id="convert-step" class="step-item">
+            <a href="#" class="tooltip" data-tooltip="Converting video">Converting video</a>
+          </li>
+          <li id="done-step" class="step-item">
+            <a href="#" class="tooltip" data-tooltip="All done">Done</a>
+          </li>
+        </ul>
+      </div>
+      <div class="divider"></div>
+      <div class="columns bg-gray text-center">
+        <div class="column col-4">
+          <span class="loading loading-status"> </span><div id="status">Idle</div>
+        </div>
+        <div class="column col-8">
+          <progress id="progress" class="progress status-progress" value="0" max="100"></progress>
+        </div>
+      </div>
+      <!-- <div class="loading loading-lg"></div>
+      
+        
+        <progress class="progress" style="width:500px" value="1" max="100"></progress> -->
+        <!-- You can also require other files to run in this process -->
+        <script>
+          window.$ = require('./js/jquery-3.5.0.min.js')
+        </script>
+        <script src="./renderer.js"></script>
+      </div>
+    </div>
+    <!-- <div class="col-12">
+      <pre class="code invert output">Waiting for valid YouTube URL...</pre>
+    </div> -->
+  </body>
+</html>

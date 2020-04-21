@@ -1,0 +1,7 @@
+node_modules
+*.mp4
+*.zip
+*.zpaq
+dist
+notes.txt
+convert.js

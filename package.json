@@ -1,0 +1,30 @@
+{
+    "name": "zoomtube",
+    "productName": "ZoomTube",
+    "version": "0.8.3",
+    "main": "app/main.js",
+    "description": "Downloads YT videos and converts them into a format that can be used as a zoom video background",
+    "scripts": {
+        "postinstall": "electron-builder install-app-deps && cd app && yarn",
+        "startdev": "DEV=1 electron app/main.js",
+        "start": "electron app/main.js"
+    },
+    "author": "Brian Harper <bharper@gmail.com>",
+    "license": "MIT",
+    "devDependencies": {
+        "electron": "^8.2.3",
+        "electron-builder": "^22.5.1",
+        "electron-packager": "^14.2.1"
+    },
+    "build": {
+        "appId": "com.brianharper.zoomtube",
+        "productName": "ZoomTube",
+        "mac": {
+            "category": "public.app-category.video"
+        },
+        "win": {
+            "target": "portable"
+        }
+    },
+    "dependencies": {}
+}
