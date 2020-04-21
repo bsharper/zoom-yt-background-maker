@@ -1,6 +1,8 @@
 # zoom-yt-background-maker
 Converts YT video links into zoom background videos
 
+<kbd><img src="https://github.com/bsharper/zoom-yt-background-maker/blob/master/build/screenshot_mac.png?raw=true" alt="screenshot on macOS" width="400"/></kbd><kbd><img src="https://github.com/bsharper/zoom-yt-background-maker/blob/master/build/screenshot_win.png?raw=true" alt="screenshot on Windows" width="400"/></kbd>
+
 ## Quick start
 
 Grab a release from [here](https://github.com/bsharper/zoom-yt-background-maker/releases/latest) and run it.
