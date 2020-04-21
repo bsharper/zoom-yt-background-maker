@@ -6,7 +6,8 @@ const log = require('electron-log');
 const os = require('os');
 const dirsep = path.sep;
 
-const debounce = require('lodash/debounce')
+const debounce = require('lodash/debounce');
+const runonce = require('lodash/once');
 
 const downloadLog = log.create('download');
 const convertLog = log.create('convert');
@@ -19,6 +20,8 @@ convertLog.transports.console.level = false;
 console.log = log.log;
 
 //const ffmpegPath = require('ffmpeg-static');
+var electron = require('electron');
+
 var tmpffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 if (tmpffmpegPath.indexOf("app.asar") > -1) {
     var oldffmpegPath = tmpffmpegPath;
@@ -39,6 +42,9 @@ var youtubeFileLocation = false;
 var isWorking = false;
 var ytMetadata = false;
 var addlConvertInfo = "";
+var cancelling = false;
+var curYtdlJob = false;
+var curFfmpegJob = false;
 
 function toggleLoadingStatus(tf) {
     if (tf) $(".loading-status").fadeIn();
@@ -107,12 +113,16 @@ function convert() {
             if (p.timemark) updateNonProgressInfo(` - ${p.timemark}`);
         }
     })
+    
     job.on('start', () => {
         cStartTime = Date.now()
         convertLog.info(`convert started: ${cStartTime}`)
         console.log('convert start')
     })
     job.on('error', err => {
+        if (cancelling) {
+            return;
+        }
         console.log(`convert error`)
         convertLog.error(err)
         if (isMac && vcodec == 'h264_videotoolbox') {
@@ -135,7 +145,7 @@ function convert() {
             done();
         });
     })
-    job.save(fileLocation);
+    curFfmpegJob = job.save(fileLocation);
 }
 
 function justConvert() {
@@ -169,11 +179,14 @@ function download() {
     updateStep("download");
     $("#yturl").addClass("disabled");
     $("#start").addClass("disabled");
+    $("#start").hide();
+    $("#cancel").show();
     
     youtubeFileLocation = path.join(os.tmpdir(), `${Date.now()}-yt-temp.mp4`); // `${os.tmpdir()} ${Date.now()}-yt-temp.mp4`;
     downloadLog.info(`Temporary YT file location: ${youtubeFileLocation}`)
     var url = $("#yturl").val();
     const video = ytdl(url);
+    curYtdlJob = video;
     let starttime;
     video.pipe(fs.createWriteStream(youtubeFileLocation));
     video.once('response', () => {
@@ -193,11 +206,14 @@ function download() {
         downloadLog.info(`${(percent * 100).toFixed(2)}% downloaded `);
         downloadLog.info(`(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)\n`);
         downloadLog.info(`running for: ${downloadedMinutes.toFixed(2)} minutes, estimated time left: ${estimatedDownloadTime.toFixed(2)} minutes `);
-
     });
     video.on('error', err => {
+        if (cancelling) {
+            return;
+        }
         downloadLog.error(err)
         console.log(`Error downloading`)
+        errorDone(err);
     })
     video.on('end', () => {
         console.log(`download complete`)
@@ -224,16 +240,19 @@ function timeoutPromise(ms) {
 
 async function errorDone (err) {
     var logPath = path.dirname(log.transports.file.getFile().path);
-    var msgOpts = {type: 'error', message: `Uh oh, there was an error during the ${curStatus.toLowerCase()} step.\nClick "Start again" to try again\n\nLogs are stored under ${logPath}, more information about the error can be found there.`}
+    var msgOpts = {type: 'error', message: `Uh oh, there was an error during the ${curStatus.toLowerCase()} step.`, detail: `Click "Start again" to try again\n\nLogs are stored under ${logPath}, more information about the error can be found there.`}
     await done('Error', msgOpts);
 }
 
 async function done (lstatus, msgOpts) {
-    if (typeof msgOpts == 'undefined') msgOpts = {type: 'info', message: `All done! The output file has been saved to ${fileLocation}.\n\nIn Zoom go to Settings, then Virtual Background, then click the + icon and select Add Video, then pick the video file above (${path.basename(fileLocation)}).`}
+    let fn = (fileLocation ? `(${path.basename(fileLocation)})` : "");
+    let fp = (fileLocation ? ` to ${fileLocation}` : "");
+    if (typeof msgOpts == 'undefined') msgOpts = {type: 'info', message: `All done! The output file has been saved${fp}.`, detail: `In Zoom go to Settings, then Virtual Background, then click the + icon and select Add Video, then pick the video file you created ${fn}.`}
     if (typeof lstatus == 'undefined') lstatus = 'Done!';
     status(lstatus);
     updateStep("done");
     toggleLoadingStatus(false);
+    $("#cancel").hide();
     $("#start").hide();
     $("#reload").fadeIn();
     await timeoutPromise(500);
@@ -261,6 +280,48 @@ async function getSaveLocation (cb) {
     }
 }
 
+function restartApp() {
+    window.location.reload();
+    // electron.remote.app.relaunch()
+    // electron.remote.app.exit(0)
+}
+
+function _cancel() {
+    cancelling = true;
+
+    setTimeout(() => {
+        restartApp()
+    }, 1000);
+    
+    try {
+        if (curYtdlJob) curYtdlJob.destroy();
+    } catch (err) {
+        console.log(`ytdl destroy, error probably ok (raised during cancel): ${err}`);
+    }
+
+    try {
+        if (curFfmpegJob) curFfmpegJob.kill();
+    } catch (err) {
+        console.log(`ffmpeg kill, error probably ok (raised during cancel): ${err}`);
+    }
+    if (youtubeFileLocation) fs.unlink(youtubeFileLocation, (err) => {
+        console.log(`unlink yt file, error probably ok (raised during cancel): ${err}`);
+    });
+}
+const cancel = runonce(_cancel);
+
+function cancelConfirm() {
+    if (cancelling) return;
+    let st = "Cancel process?"
+    dialog.showMessageBox({title: st, message: st, detail: "This will stop the download and conversion process", type:"question", buttons: ["Yes, really stop", "Nevermind, continue"], cancelId: 1, defaultId:1}).then(r=> {
+        console.log(`cancelConfirm response: ${r.response == 0 ? "really cancelling" : "not cancelling"}`)
+        if (r.response == 0) {
+            console.log(`cancelling process`);
+            cancel();
+        }
+    })
+}
+
 
 $(function () {
     pbar = $("#progress")[0];
@@ -274,9 +335,18 @@ $(function () {
     $("#yturl").on("keydown keyup drop", function () {
         checkURL();
     });
+    $("#reload").click(function () {
+        restartApp();
+    })
     setTimeout(() => {
         $("#yturl").focus();
     }, 200)
+
+    $("#cancel").click(function () {
+        setTimeout(() => {
+            cancelConfirm();
+        }, 1)
+    });
 
     $("#start").click(function () {
         var $this = $(this);
