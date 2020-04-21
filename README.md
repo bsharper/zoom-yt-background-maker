@@ -1,16 +1,20 @@
 # zoom-yt-background-maker
 Converts YT video links into zoom background videos
 
-## Installation
+## Quick start
 
-1. Clone repository
+Grab a release from [here](https://github.com/bsharper/zoom-yt-background-maker/releases/latest) and run it.
+
+## Requirements
+
+A recent version of a node.js with [yarn](https://classic.yarnpkg.com/en/docs/install) installed.
+
+## Installation 
+
+1. Clone the repository
 2. Run `yarn` 
-3. Run `yarn startdev` to start with dev tools enabled, `yarn start` to start without
+3. Run `yarn startdev` to start with dev tools enabled, `yarn start` to start without (dev tools can be opened if you know the keyboard shortcut).
 4. To build for Windows or macOS, run `npx electron-builder -m | -w`.
-
-## Building
-
-I've tested this 
 
 ## Notes
 
