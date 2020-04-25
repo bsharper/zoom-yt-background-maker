@@ -9,6 +9,8 @@ const dirsep = path.sep;
 const debounce = require('lodash/debounce');
 const runonce = require('lodash/once');
 
+const moment = require('moment')
+
 const downloadLog = log.create('download');
 const convertLog = log.create('convert');
 downloadLog.transports.file.fileName = "download.log";
@@ -45,38 +47,14 @@ var addlConvertInfo = "";
 var cancelling = false;
 var curYtdlJob = false;
 var curFfmpegJob = false;
+var ytDownloadURL = false;
+var ytSecondsLengthWarning = 600
+var seekInput = false; // false or 0 to disable, number of seconds to skip at the start of the video - any positive # enables
 
 function toggleLoadingStatus(tf) {
     if (tf) $(".loading-status").fadeIn();
     else $(".loading-status").fadeOut();
 }
-
-function _checkURL() {
-    var val = $("#yturl").val();
-    var valid = ytdl.validateURL(val);
-    //console.log(`URL provided: ${val}`)
-    //console.log(`URL valid: ${valid}`)
-    var $st = $("#start")
-    var st = $st[0];
-    var utt = $("#urltooltip")[0]
-    var uicon = $("#urlicon")
-    //$st.addClass("tooltip");
-    if (valid) {
-        $("#start").removeClass("disabled");
-        $("#start").addClass("btn-success");
-        uicon.removeClass("icon-arrow-right").addClass("icon-check")
-        st.dataset.tooltip = "Valid URL found, click to begin"
-        utt.dataset.tooltip = "URL valid, click start to begin"
-    } else {
-        $("#start").addClass("disabled");
-        $("#start").removeClass("btn-success");
-        uicon.removeClass("icon-check").addClass("icon-arrow-right")
-        utt.dataset.tooltip = "Enter a valid YouTube URL here"
-        st.dataset.tooltip = "Enter a valid YouTube URL before clicking start"
-    }
-}
-
-const checkURL = debounce(_checkURL, 100);
 
 function updateProgressbar(val) {
     try {
@@ -104,6 +82,7 @@ function convert() {
     updateStep('convert');
     var cStartTime;
     var job = ffmpeg(youtubeFileLocation).size('1280x720').noAudio().videoCodec(vcodec).videoBitrate('1000k')
+    if (seekInput) job.seekInput(seekInput);
     job.on('progress', p => {
         convertLog.info(`progress: ${JSON.stringify(p, null, 4)}`);
         //pbar.value = p.percent;
@@ -148,20 +127,9 @@ function convert() {
     curFfmpegJob = job.save(fileLocation);
 }
 
-function justConvert() {
-    status("Downloading");
-    updateStep("download");
-    $("#yturl").addClass("disabled");
-    $("#start").addClass("disabled");
-    setTimeout(() => {
-        errorDone('error')
-        //convert();
-    }, 2000);
-}
-
-function getYTInfo() {
+function getYTInfo(url) {
     return new Promise ((resolve, reject) => {
-        var url = $("#yturl").val();
+        if (typeof url == 'undefined') url = $("#yturl").val();
         ytdl.getBasicInfo(url).then(r => {
             ytMetadata = r;
             downloadLog.info(`getYTInfo result`, r);
@@ -193,7 +161,7 @@ function download() {
         starttime = Date.now();
         downloadLog.info(`download started ${starttime}`)
     });
-    video.on('info', () => {
+    video.once('info', () => {
         if (typeof video.videoInfo != 'undefined' && video.videoInfo) download.info(`videoInfo`, video.videoInfo);
         if (typeof video.videoFormat != 'undefined' && video.videoFormat) download.info(`videoFormat`, video.videoFormat);
     })
@@ -322,6 +290,92 @@ function cancelConfirm() {
     })
 }
 
+function _checkURL() {
+    var val = $("#yturl").val();
+    var valid = ytdl.validateURL(val);
+    var $st = $("#start")
+    var st = $st[0];
+    var utt = $("#urltooltip")[0]
+    var uicon = $("#urlicon")
+    //$st.addClass("tooltip");
+    if (valid) {
+        $("#start").removeClass("disabled");
+        $("#start").addClass("btn-success");
+        uicon.removeClass("icon-arrow-right").addClass("icon-check")
+        st.dataset.tooltip = "Valid URL found, click to begin"
+        utt.dataset.tooltip = "URL valid, click start to begin"
+        ytDownloadURL = val;
+    } else {
+        $("#start").addClass("disabled");
+        $("#start").removeClass("btn-success");
+        uicon.removeClass("icon-check").addClass("icon-arrow-right")
+        utt.dataset.tooltip = "Enter a valid YouTube URL here"
+        st.dataset.tooltip = "Enter a valid YouTube URL before clicking start"
+        ytDownloadURL = false;
+    }
+}
+
+const checkURL = debounce(_checkURL, 100);
+
+function verifyLongVideo (duration) {
+    return new Promise((resolve, reject) => {
+        let st = "Download long video?"
+        let humanize = moment.duration(duration, 'seconds').humanize();
+        let detailMsg = `The selected video is ${duration} seconds long (${humanize}). Downloading and converting long duration videos should work, but the download and conversion steps will take a while.`
+        console.log(`verifyLongVideo message: ${detailMsg}`);
+        dialog.showMessageBox({title: st, message: st, detail: detailMsg, type:"question", buttons: ["Yes, download and convert this video", "No, let me find another video"], cancelId: 1, defaultId:1}).then(r=> {
+            console.log(`verifyLongVideo response: ${r.response == 1 ? "stop" : "continue"} (${r.response})`)
+            if (r.response == 1) {
+                console.log(`cancelling process`);
+                resolve(false)
+            } else resolve(true)
+        })
+    })
+    
+}
+
+async function startClicked () {
+    console.log(`startClicked`)
+    var $this = $("#start");
+    var wasClicked = $this.data("clicked") || false
+    $this.data("clicked", true);
+    $this.removeClass("tooltip");
+    var wd = $this.width();
+    $this.width(`${wd}px`)
+    $this.html(`<div class="loading"></div>`)
+    toggleLoadingStatus(true);
+    var lengthSeconds = 0;
+    try {
+        console.time('getYTInfo')
+        var ytinfo = await getYTInfo(ytDownloadURL);
+        console.timeEnd('getYTInfo')
+        downloadLog.info(ytinfo);
+        lengthSeconds = parseInt(ytinfo.length_seconds);
+        console.log(`yt video (${ytDownloadURL}) is ${lengthSeconds} seconds long`)
+    } catch (err) {
+        downloadLog.error(`Error getting video metadata, skipping check\n${err}`)
+    }
+    
+    if (lengthSeconds >= ytSecondsLengthWarning) {
+        var keepGoing = await verifyLongVideo(lengthSeconds);
+        console.log(`keepGoing: ${keepGoing}`)
+        if (! keepGoing) {
+            $this.data("clicked", false);
+            $this.html(`Start`)
+            toggleLoadingStatus(false);
+            return;
+        }
+    }
+    
+    setTimeout(() => {
+        getSaveLocation(() => {
+            $("#start").html("Start")
+            console.log(`File location ${fileLocation}`);
+            download();
+        });
+    }, 1);
+
+}
 
 $(function () {
     pbar = $("#progress")[0];
@@ -349,23 +403,10 @@ $(function () {
     });
 
     $("#start").click(function () {
-        var $this = $(this);
-
-        var wasClicked = $("#start").data("clicked") || false
-        $this.data("clicked", true);
-        $this.removeClass("tooltip");
-        var wd = $this.width();
-        $this.width(`${wd}px`)
-        $this.html(`<div class="loading"></div>`)
-        toggleLoadingStatus(true);
-
         setTimeout(() => {
-            getSaveLocation(() => {
-                $("#start").html("Start")
-                console.log(`File location ${fileLocation}`);
-                download();
-            });
-        }, 1);
+            startClicked();
+        }, 1)
+        
         return false;
     });
 
