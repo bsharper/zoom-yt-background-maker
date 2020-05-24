@@ -23,17 +23,19 @@
       <div class="column nopad column-border">
         <form class="form-horizontal bg-gray">
           <div class="form-group">
-            <div class="column col-2">
+            <div class="column col-1">
               <label class="label-lg text-realbold" for="yturl">URL</label>
             </div>
-            <div id="urltooltip" class="column col-6 tooltip tooltip-top" data-tooltip="Enter a valid YouTube URL here">
+            <div id="urltooltip" class="column col-7 tooltip tooltip-top" data-tooltip="Enter a valid YouTube URL here">
               <div class="has-icon-left">
                 <input type="text" id="yturl" class="form-input" placeholder="https://youtu.be/dQw4w9WgXcQ">
                 <i id="urlicon" class="form-icon icon icon-arrow-right"></i>
               </div>
             </div>
             <div class="col-2 text-center">
-              <button id="start" href="javascript:return false;" onclick="return false" data-tooltip="Enter a valid YouTube URL before clicking start" class="btn tooltip tooltip-left disabled">Start</button>
+              <div id="startWrap" data-tooltip="Enter a valid YouTube URL before clicking start" class="tooltip tooltip-left">
+                <button id="start" href="javascript:return false;" onclick="return false" class="btn disabled">Start</button>
+              </div>
               <button id="reload" href="javascript:return false;" style="display: none";" onclick="return false" class="btn">Start again</button>
               <button id="cancel" href="javascript:return false;" style="display: none";" onclick="return false" class="btn btn-error">Cancel</button>
             </div>
@@ -49,16 +51,16 @@
       </div>
       <div id="video-info-table" style="opacity: 0;" class="column col-12">
         <div class="columns">
-          <div class="column col-2 column-border nopad">
+          <div class="column col-1 column-border nopad">
             <div class="text-right text-realbold lilpad">Title</div>
           </div>
-          <div class="column col-10 column-border nopad">
+          <div class="column col-11 column-border nopad">
             <div id="vidtitle_td" class="lilpad infotext"></div>
           </div>
-          <div class="column col-2 column-border nopad bg-gray">
-            <div class="text-right text-realbold lilpad">Duration</div>
+          <div class="column col-1 column-border nopad bg-gray">
+            <div class="text-right text-realbold lilpad">Length</div>
           </div>
-          <div class="column col-10 column-border nopad bg-gray">
+          <div class="column col-11 column-border nopad bg-gray">
             <div id="vidduration_td" class="lilpad infotext"></div>
           </div>
         </div>

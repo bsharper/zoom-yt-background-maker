@@ -61,21 +61,3 @@
 .infotext {
   color: #bcc3ce;
 }
-
-.shaker {
-  animation-name: shakeAnim;
-  animation-duration: 2.5s;
-  animation-iteration-count: 1;
-  animation-timing-function: linear;
-}
-
-@keyframes shakeAnim {
-  0% {left: 0}
-  1% {left: -3px}
-  2% {left: 5px}
-  3% {left: -8px}
-  4% {left: 8px}
-  5% {left: -5px}
-  6% {left: 3px}
-  7% {left: 0}
-}

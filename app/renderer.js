@@ -62,15 +62,17 @@ function updateProgressbar(val) {
     try {
         pbar.value = parseFloat(val);
         $("#status").html(`${curStatus} (${parseInt(val)}%)`);
+        var oval = val/100.0;
         if (currentStep == "download") {
-            bWin.setProgressBar(val/2.0);
+            bWin.setProgressBar(oval/2.0);
         } else {
-            bWin.setProgressBar(0.5 + (val/2.0));
+            bWin.setProgressBar(0.5 + (oval/2.0));
         }
     } catch (err) {
         pbarErr.push([err, val]);
     }
 }
+
 
 function updateNonProgressInfo(info) {
     addlConvertInfo = info;
@@ -314,14 +316,14 @@ function _checkURL() {
     var valid = ytdl.validateURL(val);
     var $st = $("#start")
     var st = $st[0];
+    var wst = $("#startWrap")[0];
     var utt = $("#urltooltip")[0]
     var uicon = $("#urlicon")
-    //$st.addClass("tooltip");
     if (valid) {
         $("#start").removeClass("disabled");
         $("#start").addClass("btn-success");
         uicon.removeClass("icon-arrow-right").addClass("icon-check")
-        st.dataset.tooltip = "Valid URL found, click to begin"
+        wst.dataset.tooltip = "Valid URL found, click to begin"
         utt.dataset.tooltip = "URL valid, click start to begin"
         ytDownloadURL = val;
     } else {
@@ -329,7 +331,7 @@ function _checkURL() {
         $("#start").removeClass("btn-success");
         uicon.removeClass("icon-check").addClass("icon-arrow-right")
         utt.dataset.tooltip = "Enter a valid YouTube URL here"
-        st.dataset.tooltip = "Enter a valid YouTube URL before clicking start"
+        wst.dataset.tooltip = "Enter a valid YouTube URL before clicking start"
         ytDownloadURL = false;
     }
 }
@@ -368,7 +370,7 @@ async function startClicked () {
     var $this = $("#start");
     var wasClicked = $this.data("clicked") || false
     $this.data("clicked", true);
-    $this.removeClass("tooltip");
+    $this.parent().removeClass("tooltip");
     var wd = $this.width();
     $this.width(`${wd}px`)
     $this.html(`<div class="loading"></div>`)
@@ -433,13 +435,12 @@ $(function () {
         }, 1)
     });
 
-    $("#start").click(function () {
-        if ($("#start").hasClass("disabled")) {
-            $("#start").addClass("shaker");
-            $("#start").one("animationend", () => {
-                $("#start").removeClass("shaker")
-            })
-            return
+    var $start = $("#start");
+
+    $start.click(function () {
+        if ($start.hasClass("disabled")) {
+            electron.shell.beep();
+            return;
         }
         setTimeout(() => {
             startClicked();

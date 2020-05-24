@@ -2,6 +2,7 @@ node_modules
 *.mp4
 *.zip
 *.zpaq
+old
 dist
 notes.txt
 convert.js

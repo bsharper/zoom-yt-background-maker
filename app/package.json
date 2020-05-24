@@ -1,7 +1,7 @@
 {
     "name": "zoomtube",
     "productName": "ZoomTube",
-    "version": "0.9.7",
+    "version": "1.0.0",
     "description": "Downloads YT videos and converts them into a format that can be used as a zoom video background",
     "main": "main.js",
     "scripts": {
@@ -12,10 +12,10 @@
     "devDependencies": {},
     "dependencies": {
         "@ffmpeg-installer/ffmpeg": "^1.0.20",
-        "electron-log": "^4.1.1",
+        "electron-log": "^4.2.0",
         "fluent-ffmpeg": "^2.1.2",
         "lodash": "^4.17.15",
-        "moment": "^2.24.0",
-        "ytdl-core": "^2.1.1"
+        "moment": "^2.26.0",
+        "ytdl-core": "^2.1.4"
     }
 }
