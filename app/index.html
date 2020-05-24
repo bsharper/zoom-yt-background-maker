@@ -15,18 +15,18 @@
         <div class="hero text-center small-hero">
           <div class="hero-body">
             <h1>ZoomTube <img src="./img/logo_sm.png"></h1> 
-            <p>YouTube Zoom Background Maker thingy</p>
+            <p class="infotext">YouTube Zoom Background Maker thingy</p>
             <span class="label label-rounded brag">by Brian Harper @bsharper</span>
           </div>
         </div>
       </div>
-      <div class="column nopad">
+      <div class="column nopad column-border">
         <form class="form-horizontal bg-gray">
           <div class="form-group">
             <div class="column col-2">
-              <label class="label-lg" for="yturl">URL</label>
+              <label class="label-lg text-realbold" for="yturl">URL</label>
             </div>
-            <div id="urltooltip" class="column col-8 tooltip tooltip-top" data-tooltip="Enter a valid YouTube URL here">
+            <div id="urltooltip" class="column col-6 tooltip tooltip-top" data-tooltip="Enter a valid YouTube URL here">
               <div class="has-icon-left">
                 <input type="text" id="yturl" class="form-input" placeholder="https://youtu.be/dQw4w9WgXcQ">
                 <i id="urlicon" class="form-icon icon icon-arrow-right"></i>
@@ -37,9 +37,31 @@
               <button id="reload" href="javascript:return false;" style="display: none";" onclick="return false" class="btn">Start again</button>
               <button id="cancel" href="javascript:return false;" style="display: none";" onclick="return false" class="btn btn-error">Cancel</button>
             </div>
+            <div class="col-2 text-center">
+              <div class="tooltip tooltip-left" style="width: 5em" data-tooltip="Seconds to skip at start of converted video">
+                <input type="number" id="skipseconds" class="form-input" style="text-align: center" min="0" value="0">
+              </div>
+              
+            </div>
           </div>
           
         </form>
+      </div>
+      <div id="video-info-table" style="opacity: 0;" class="column col-12">
+        <div class="columns">
+          <div class="column col-2 column-border nopad">
+            <div class="text-right text-realbold lilpad">Title</div>
+          </div>
+          <div class="column col-10 column-border nopad">
+            <div id="vidtitle_td" class="lilpad infotext"></div>
+          </div>
+          <div class="column col-2 column-border nopad bg-gray">
+            <div class="text-right text-realbold lilpad">Duration</div>
+          </div>
+          <div class="column col-10 column-border nopad bg-gray">
+            <div id="vidduration_td" class="lilpad infotext"></div>
+          </div>
+        </div>
       </div>
       <div class="col-12">
         
@@ -67,19 +89,12 @@
           <progress id="progress" class="progress status-progress" value="0" max="100"></progress>
         </div>
       </div>
-      <!-- <div class="loading loading-lg"></div>
-      
-        
-        <progress class="progress" style="width:500px" value="1" max="100"></progress> -->
-        <!-- You can also require other files to run in this process -->
         <script>
           window.$ = require('./js/jquery-3.5.0.min.js')
         </script>
         <script src="./renderer.js"></script>
       </div>
     </div>
-    <!-- <div class="col-12">
-      <pre class="code invert output">Waiting for valid YouTube URL...</pre>
-    </div> -->
+
   </body>
 </html>

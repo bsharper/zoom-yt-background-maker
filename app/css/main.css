@@ -2,6 +2,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+:not(input):not(textarea),
+:not(input):not(textarea)::after,
+:not(input):not(textarea)::before {
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+}
   label[for="yturl"] {
     float:right; 
     margin-top: 6px
@@ -40,4 +47,35 @@
     color: white;
     font-size: 0.8em;
   }
-  
+  .column-border {
+    border-bottom: .05rem solid #dadee4;
+    border-top: .05rem solid #dadee4;
+  }
+
+  .text-realbold {
+    font-weight: 800;
+  }
+  .lilpad {
+    padding: 5px;
+  }
+.infotext {
+  color: #bcc3ce;
+}
+
+.shaker {
+  animation-name: shakeAnim;
+  animation-duration: 2.5s;
+  animation-iteration-count: 1;
+  animation-timing-function: linear;
+}
+
+@keyframes shakeAnim {
+  0% {left: 0}
+  1% {left: -3px}
+  2% {left: 5px}
+  3% {left: -8px}
+  4% {left: 8px}
+  5% {left: -5px}
+  6% {left: 3px}
+  7% {left: 0}
+}

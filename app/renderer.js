@@ -1,9 +1,11 @@
 const ytdl = require('ytdl-core');
 const fs = require('fs');
-const dialog = require('electron').remote.dialog;
+const electron = require('electron');
+const dialog = electron.remote.dialog;
 const path = require('path')
 const log = require('electron-log');
-const os = require('os');
+const os = require('os')
+const bWin = electron.remote.getCurrentWindow();
 const dirsep = path.sep;
 
 const debounce = require('lodash/debounce');
@@ -22,7 +24,6 @@ convertLog.transports.console.level = false;
 console.log = log.log;
 
 //const ffmpegPath = require('ffmpeg-static');
-var electron = require('electron');
 
 var tmpffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 if (tmpffmpegPath.indexOf("app.asar") > -1) {
@@ -39,6 +40,7 @@ var vcodec = isMac ? "h264_videotoolbox" : "libx264";
 var pbar;
 var pbarErr = [];
 var curStatus = "Idle"
+var currentStep = "";
 var fileLocation = false;
 var youtubeFileLocation = false;
 var isWorking = false;
@@ -49,7 +51,7 @@ var curYtdlJob = false;
 var curFfmpegJob = false;
 var ytDownloadURL = false;
 var ytSecondsLengthWarning = 600
-var seekInput = false; // false or 0 to disable, number of seconds to skip at the start of the video - any positive # enables
+var seekInput = 0; // false or 0 to disable, number of seconds to skip at the start of the video - any positive # enables
 
 function toggleLoadingStatus(tf) {
     if (tf) $(".loading-status").fadeIn();
@@ -60,6 +62,11 @@ function updateProgressbar(val) {
     try {
         pbar.value = parseFloat(val);
         $("#status").html(`${curStatus} (${parseInt(val)}%)`);
+        if (currentStep == "download") {
+            bWin.setProgressBar(val/2.0);
+        } else {
+            bWin.setProgressBar(0.5 + (val/2.0));
+        }
     } catch (err) {
         pbarErr.push([err, val]);
     }
@@ -72,6 +79,7 @@ function updateNonProgressInfo(info) {
 }
 
 function updateStep(step) {
+    currentStep = step;
     $(".step-item").removeClass("active");
     $(`#${step}-step`).addClass("active");
 }
@@ -127,12 +135,22 @@ function convert() {
     curFfmpegJob = job.save(fileLocation);
 }
 
-function getYTInfo(url) {
+function showYTInfo(r) {
+    if (typeof r === 'undefined') r = {'title': 'Test Video Title', 'length_seconds': 120};
+    $("#vidtitle_td").html(`${r.title}`);
+    $("#vidduration_td").html(`${r.length_seconds} seconds`);
+    $("#video-info-table").animate({'opacity': 1})
+}
+
+function getYTInfo(url, showTable) {
     return new Promise ((resolve, reject) => {
+        if (typeof showTable == 'undefined') showTable = true;
         if (typeof url == 'undefined') url = $("#yturl").val();
+        if (showTable) $("#video-info-table").css({'opacity': 0})
         ytdl.getBasicInfo(url).then(r => {
             ytMetadata = r;
             downloadLog.info(`getYTInfo result`, r);
+            if (showTable) showYTInfo(r);
             resolve(r);
         }).catch(err => { 
             downloadLog.error(`getYTInfo error`)
@@ -217,6 +235,7 @@ async function done (lstatus, msgOpts) {
     let fp = (fileLocation ? ` to ${fileLocation}` : "");
     if (typeof msgOpts == 'undefined') msgOpts = {type: 'info', message: `All done! The output file has been saved${fp}.`, detail: `In Zoom go to Settings, then Virtual Background, then click the + icon and select Add Video, then pick the video file you created ${fn}.`}
     if (typeof lstatus == 'undefined') lstatus = 'Done!';
+    bWin.setProgressBar(-1);
     status(lstatus);
     updateStep("done");
     toggleLoadingStatus(false);
@@ -317,6 +336,16 @@ function _checkURL() {
 
 const checkURL = debounce(_checkURL, 100);
 
+function _setSeek() {
+    var s = parseInt($("#skipseconds").val());
+    if ((! Number.isNaN(s)) && Number.isInteger(s) && s > 0) {
+        convertLog.info(`Setting converted video start seek to ${s} seconds`)
+        seekInput = s;
+    }
+}
+
+const setSeek = debounce(_setSeek, 50);
+
 function verifyLongVideo (duration) {
     return new Promise((resolve, reject) => {
         let st = "Download long video?"
@@ -374,7 +403,6 @@ async function startClicked () {
             download();
         });
     }, 1);
-
 }
 
 $(function () {
@@ -389,6 +417,9 @@ $(function () {
     $("#yturl").on("keydown keyup drop", function () {
         checkURL();
     });
+    $("#skipseconds").on("change paste keydown drop", function () {
+        setSeek();
+    })
     $("#reload").click(function () {
         restartApp();
     })
@@ -403,6 +434,13 @@ $(function () {
     });
 
     $("#start").click(function () {
+        if ($("#start").hasClass("disabled")) {
+            $("#start").addClass("shaker");
+            $("#start").one("animationend", () => {
+                $("#start").removeClass("shaker")
+            })
+            return
+        }
         setTimeout(() => {
             startClicked();
         }, 1)
