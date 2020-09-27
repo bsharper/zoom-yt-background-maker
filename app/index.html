@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="css/spectre.css">
     <link rel="stylesheet" href="css/spectre-icons.css">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dragdrop.css">
+
   </head>
   <body>
     <div class="container">
@@ -95,8 +97,12 @@
           window.$ = require('./js/jquery-3.5.0.min.js')
         </script>
         <script src="./renderer.js"></script>
+        <script src="js/lodash.min.js"></script>
+        <script src="js/dragdrop.js"></script>
       </div>
     </div>
-
+    <div id="droptarget">
+      <h2>Drop a file to convert here</h2>
+    </div>
   </body>
 </html>

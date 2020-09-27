@@ -45,6 +45,7 @@ var fileLocation = false;
 var youtubeFileLocation = false;
 var isWorking = false;
 var ytMetadata = false;
+var dropConvert = false;
 var addlConvertInfo = "";
 var cancelling = false;
 var curYtdlJob = false;
@@ -83,7 +84,7 @@ function updateNonProgressInfo(info) {
 function updateStep(step) {
     currentStep = step;
     $(".step-item").removeClass("active");
-    $(`#${step}-step`).addClass("active");
+    if (step != "done") $(`#${step}-step`).addClass("active");
 }
 
 
@@ -130,9 +131,13 @@ function convert() {
     job.on('end', () => {
         console.log(`convert done`)
         convertLog.info(`convert done ${Date.now()}`)
-        fs.unlink(youtubeFileLocation, () => {
+        if (dropConvert) {
             done();
-        });
+        } else {
+            fs.unlink(youtubeFileLocation, () => {
+                done();
+            });
+        }
     })
     curFfmpegJob = job.save(fileLocation);
 }
@@ -376,33 +381,40 @@ async function startClicked () {
     $this.html(`<div class="loading"></div>`)
     toggleLoadingStatus(true);
     var lengthSeconds = 0;
-    try {
-        console.time('getYTInfo')
-        var ytinfo = await getYTInfo(ytDownloadURL);
-        console.timeEnd('getYTInfo')
-        downloadLog.info(ytinfo);
-        lengthSeconds = parseInt(ytinfo.length_seconds);
-        console.log(`yt video (${ytDownloadURL}) is ${lengthSeconds} seconds long`)
-    } catch (err) {
-        downloadLog.error(`Error getting video metadata, skipping check\n${err}`)
-    }
-    
-    if (lengthSeconds >= ytSecondsLengthWarning) {
-        var keepGoing = await verifyLongVideo(lengthSeconds);
-        console.log(`keepGoing: ${keepGoing}`)
-        if (! keepGoing) {
-            $this.data("clicked", false);
-            $this.html(`Start`)
-            toggleLoadingStatus(false);
-            return;
+    if (dropConvert) {
+        console.log('File was dragged and dropped, skipping download step');
+    } else {
+        try {
+            console.time('getYTInfo')
+            var ytinfo = await getYTInfo(ytDownloadURL);
+            console.timeEnd('getYTInfo')
+            downloadLog.info(ytinfo);
+            lengthSeconds = parseInt(ytinfo.length_seconds);
+            console.log(`yt video (${ytDownloadURL}) is ${lengthSeconds} seconds long`)
+        } catch (err) {
+            downloadLog.error(`Error getting video metadata, skipping check\n${err}`)
+        }
+        
+        if (lengthSeconds >= ytSecondsLengthWarning) {
+            var keepGoing = await verifyLongVideo(lengthSeconds);
+            console.log(`keepGoing: ${keepGoing}`)
+            if (! keepGoing) {
+                $this.data("clicked", false);
+                $this.html(`Start`)
+                toggleLoadingStatus(false);
+                return;
+            }
         }
     }
-    
     setTimeout(() => {
         getSaveLocation(() => {
             $("#start").html("Start")
             console.log(`File location ${fileLocation}`);
-            download();
+            if (dropConvert) {
+                convert();
+            } else {
+                download();
+            }
         });
     }, 1);
 }
