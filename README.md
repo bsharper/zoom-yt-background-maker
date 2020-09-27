@@ -20,7 +20,9 @@ A recent version of a node.js with [yarn](https://classic.yarnpkg.com/en/docs/in
 
 ## Notes
 
-This was written in one night, so don't expect this to be a good example of a code organization. A lot of the code should be running under the main process instead of the renderer. 
+This was written as a side project, so don't expect this to be a good example of a code organization. A lot of the code should be running under the main process instead of the renderer. 
+
+You can also drag and drop files onto the window to convert local files. Dragging and dropping a file will start the conversion process after prompting you for a location for the converted video.
 
 Under the hood, this uses `ytdl-core` to grab the videos and `ffmpeg` (via `ffmpeg-installer` and `fluent-ffmpeg`) to convert them. 
 
