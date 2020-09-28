@@ -14,8 +14,7 @@
         "@ffmpeg-installer/ffmpeg": "^1.0.20",
         "electron-log": "^4.2.0",
         "fluent-ffmpeg": "^2.1.2",
-        "lodash": "^4.17.19",
-        "moment": "^2.26.0",
-        "ytdl-core": "^2.1.4"
+        "moment": "^2.29.0",
+        "ytdl-core": "^3.3.0"
     }
 }

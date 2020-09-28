@@ -8,8 +8,11 @@ const os = require('os')
 const bWin = electron.remote.getCurrentWindow();
 const dirsep = path.sep;
 
-const debounce = require('lodash/debounce');
-const runonce = require('lodash/once');
+// const debounce = require('lodash/debounce');
+// const runonce = require('lodash/once');
+const debounce = _.debounce;
+const runonce = _.once;
+
 
 const moment = require('moment')
 
@@ -22,6 +25,11 @@ downloadLog.transports.console.level = false;
 convertLog.transports.console.level = false;
 
 console.log = log.log;
+
+var dialogFilters = [
+    { name: 'Video Files', extensions: ['mkv', 'avi', 'mp4', 'mov'] },
+    { name: 'All Files', extensions: ['*'] }
+]
 
 //const ffmpegPath = require('ffmpeg-static');
 
@@ -45,7 +53,7 @@ var fileLocation = false;
 var youtubeFileLocation = false;
 var isWorking = false;
 var ytMetadata = false;
-var dropConvert = false;
+var localConversionOnly = false;
 var addlConvertInfo = "";
 var cancelling = false;
 var curYtdlJob = false;
@@ -85,6 +93,12 @@ function updateStep(step) {
     currentStep = step;
     $(".step-item").removeClass("active");
     if (step != "done") $(`#${step}-step`).addClass("active");
+    if (step == "download" || step == "convert") {
+        $("#yturl").addClass("disabled");
+        $("#start").addClass("disabled");
+        $("#start").hide();
+        $("#cancel").show();
+    }
 }
 
 
@@ -131,8 +145,10 @@ function convert() {
     job.on('end', () => {
         console.log(`convert done`)
         convertLog.info(`convert done ${Date.now()}`)
-        if (dropConvert) {
-            done();
+        if (localConversionOnly) {
+            setImmediate(() => {
+                done();
+            })
         } else {
             fs.unlink(youtubeFileLocation, () => {
                 done();
@@ -170,10 +186,7 @@ function getYTInfo(url, showTable) {
 function download() {
     status("Downloading");
     updateStep("download");
-    $("#yturl").addClass("disabled");
-    $("#start").addClass("disabled");
-    $("#start").hide();
-    $("#cancel").show();
+
     
     youtubeFileLocation = path.join(os.tmpdir(), `${Date.now()}-yt-temp.mp4`); // `${os.tmpdir()} ${Date.now()}-yt-temp.mp4`;
     downloadLog.info(`Temporary YT file location: ${youtubeFileLocation}`)
@@ -240,7 +253,7 @@ async function errorDone (err) {
 async function done (lstatus, msgOpts) {
     let fn = (fileLocation ? `(${path.basename(fileLocation)})` : "");
     let fp = (fileLocation ? ` to ${fileLocation}` : "");
-    if (typeof msgOpts == 'undefined') msgOpts = {type: 'info', message: `All done! The output file has been saved${fp}.`, detail: `In Zoom go to Settings, then Virtual Background, then click the + icon and select Add Video, then pick the video file you created ${fn}.`}
+    if (typeof msgOpts == 'undefined') msgOpts = {type: 'info', message: `All done! The output file has been saved${fp}.`, detail: `In Zoom go to Settings, then Virtual Background, then click the + icon and select Add Video, then select the video file you created ${fn}.`}
     if (typeof lstatus == 'undefined') lstatus = 'Done!';
     bWin.setProgressBar(-1);
     status(lstatus);
@@ -254,7 +267,11 @@ async function done (lstatus, msgOpts) {
 }
 
 async function getSaveLocation (cb) {
-    var pr = await dialog.showSaveDialog({title: 'Pick where to save Zoom background movie'});
+    var pr = await dialog.showSaveDialog({
+        title: 'Filename for new video', 
+        message: 'Enter the filename and location for the file being created',
+        properties: ["showOverwriteConfirmation"]
+    });
     var $st = $("#start");
     $st.html(`Start`)
 
@@ -263,7 +280,7 @@ async function getSaveLocation (cb) {
         toggleLoadingStatus(false);
         return;
     }
-    var fn = pr.filePath;
+    var fn = pr.filePath
     if (! fn.endsWith(".mp4")) fn = `${fn}.mp4`;
     fileLocation = fn;
     if (cb) try {
@@ -298,7 +315,7 @@ function _cancel() {
     } catch (err) {
         console.log(`ffmpeg kill, error probably ok (raised during cancel): ${err}`);
     }
-    if (youtubeFileLocation) fs.unlink(youtubeFileLocation, (err) => {
+    if (youtubeFileLocation && (!localConversionOnly)) fs.unlink(youtubeFileLocation, (err) => {
         console.log(`unlink yt file, error probably ok (raised during cancel): ${err}`);
     });
 }
@@ -335,8 +352,8 @@ function _checkURL() {
         $("#start").addClass("disabled");
         $("#start").removeClass("btn-success");
         uicon.removeClass("icon-check").addClass("icon-arrow-right")
-        utt.dataset.tooltip = "Enter a valid YouTube URL here"
-        wst.dataset.tooltip = "Enter a valid YouTube URL before clicking start"
+        utt.dataset.tooltip = `Enter a valid YouTube URL here`
+        wst.dataset.tooltip = `Enter a valid YouTube URL before clicking start`
         ytDownloadURL = false;
     }
 }
@@ -370,6 +387,22 @@ function verifyLongVideo (duration) {
     
 }
 
+function startLocalConversion(filename) {
+    localConversionOnly = true;
+    youtubeFileLocation = filename;
+    if (currentStep != "done" && currentStep != "") {
+        console.log('Already converting something, not starting a 2nd conversion')
+        return;
+    }
+    $("#wait-step").remove()
+    var $ds = $("#download-step").find("a").first();
+    $ds.html("Select local file");
+    $ds[0].dataset.tooltip = "Select local file"
+    startClicked().then(() => {
+        console.log('local conversion complete')
+    })
+}
+
 async function startClicked () {
     console.log(`startClicked`)
     var $this = $("#start");
@@ -381,8 +414,8 @@ async function startClicked () {
     $this.html(`<div class="loading"></div>`)
     toggleLoadingStatus(true);
     var lengthSeconds = 0;
-    if (dropConvert) {
-        console.log('File was dragged and dropped, skipping download step');
+    if (localConversionOnly) {
+        console.log('Local conversion only, skipping download step');
     } else {
         try {
             console.time('getYTInfo')
@@ -410,7 +443,7 @@ async function startClicked () {
         getSaveLocation(() => {
             $("#start").html("Start")
             console.log(`File location ${fileLocation}`);
-            if (dropConvert) {
+            if (localConversionOnly) {
                 convert();
             } else {
                 download();
@@ -419,8 +452,33 @@ async function startClicked () {
     }, 1);
 }
 
+function doubleClickYTURL() {
+    if (currentStep !== "") {
+        console.log('Not in idle state')
+        return;
+    }
+    dialog.showOpenDialog({
+        title: 'Select local video file to convert',
+        filters: dialogFilters
+    }).then(r=> {
+        if (r.canceled || r.filePaths === 0) {
+            console.log(`Local file conversion cancelled (no input file selected)`)
+            return
+        }
+        var filepath = r.filePaths[0]
+
+        console.log(`File selected: ${filepath}`)
+        if (filepath) startLocalConversion(filepath);
+    })
+}
+
 $(function () {
     pbar = $("#progress")[0];
+    $("#yturl").on("dblclick", function (e) {
+        setImmediate(() => {
+            doubleClickYTURL();
+        });
+    });
 
     $("#yturl").on("change", function () {
         checkURL();
@@ -460,6 +518,8 @@ $(function () {
         
         return false;
     });
+
+    //checkURL();
 
     // setTimeout(() => {
     //     $("#yturl").val("https://www.youtube.com/watch?v=rEab0He0wxk").trigger("change");

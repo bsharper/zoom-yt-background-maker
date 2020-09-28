@@ -15,13 +15,12 @@
     "author": "Brian Harper <bharper@gmail.com>",
     "license": "MIT",
     "devDependencies": {
-        "electron": "^9.0.0",
-        "electron-builder": "^22.7.0",
-        "electron-packager": "^15.0.0",
+        "electron": "^10.1.2",
+        "electron-builder": "^22.8.1",
+        "electron-packager": "^15.1.0",
         "rimraf": "^3.0.2"
     },
     "build": {
-        "afterPack": "./afterPack.js",
         "appId": "com.brianharper.zoomtube",
         "productName": "ZoomTube",
         "mac": {

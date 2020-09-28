@@ -32,17 +32,13 @@ $(function () {
         event.stopPropagation();
         $droptarget.hide();
         counter = 0
-        if (currentStep != "done" && currentStep != "") {
-            console.log('Already converting something, not starting a 2nd conversion')
-            return;
-        }
-        dropConvert = true;
+        var filepath = false;
         for (const f of event.dataTransfer.files) {
-            youtubeFileLocation = f.path;
+            filepath = f.path;
             console.log('File Path of dragged files: ', f.path)
         }
-        if (youtubeFileLocation) {
-            startClicked();
+        if (filepath) {
+            startLocalConversion(filepath);
         }
     });
 
