@@ -160,8 +160,8 @@ function convert() {
 
 function showYTInfo(r) {
     if (typeof r === 'undefined') r = {'title': 'Test Video Title', 'length_seconds': 120};
-    $("#vidtitle_td").html(`${r.title}`);
-    $("#vidduration_td").html(`${r.length_seconds} seconds`);
+    $("#vidtitle_td").html(`${r.videoDetails.title}`);
+    $("#vidduration_td").html(`${r.videoDetails.lengthSeconds} seconds`);
     $("#video-info-table").animate({'opacity': 1})
 }
 
@@ -255,6 +255,13 @@ async function done (lstatus, msgOpts) {
     let fp = (fileLocation ? ` to ${fileLocation}` : "");
     if (typeof msgOpts == 'undefined') msgOpts = {type: 'info', message: `All done! The output file has been saved${fp}.`, detail: `In Zoom go to Settings, then Virtual Background, then click the + icon and select Add Video, then select the video file you created ${fn}.`}
     if (typeof lstatus == 'undefined') lstatus = 'Done!';
+    var questOpts = {
+        type:'question',
+        buttons: ["Close", "Show output file"], 
+        cancelId: 0, 
+        defaultId:0
+    }
+    msgOpts = Object.assign({}, msgOpts, questOpts)
     bWin.setProgressBar(-1);
     status(lstatus);
     updateStep("done");
@@ -263,7 +270,14 @@ async function done (lstatus, msgOpts) {
     $("#start").hide();
     $("#reload").fadeIn();
     await timeoutPromise(500);
-    await dialog.showMessageBox(msgOpts);
+    var r = await dialog.showMessageBox(msgOpts);
+    if (r.response == 1) {
+        setImmediate(() => {
+            console.log(`Showing file "${fileLocation}"`)
+            electron.shell.showItemInFolder(fileLocation);
+        })
+    }
+
 }
 
 async function getSaveLocation (cb) {
@@ -422,7 +436,7 @@ async function startClicked () {
             var ytinfo = await getYTInfo(ytDownloadURL);
             console.timeEnd('getYTInfo')
             downloadLog.info(ytinfo);
-            lengthSeconds = parseInt(ytinfo.length_seconds);
+            lengthSeconds = parseInt(ytinfo.videoDetails.lengthSeconds);
             console.log(`yt video (${ytDownloadURL}) is ${lengthSeconds} seconds long`)
         } catch (err) {
             downloadLog.error(`Error getting video metadata, skipping check\n${err}`)

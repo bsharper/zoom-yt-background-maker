@@ -1,7 +1,7 @@
 {
     "name": "zoomtube",
     "productName": "ZoomTube",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "description": "Downloads YT videos and converts them into a format that can be used as a zoom video background",
     "main": "main.js",
     "scripts": {
