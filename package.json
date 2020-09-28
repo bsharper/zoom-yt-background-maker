@@ -8,6 +8,7 @@
         "postinstall": "electron-builder install-app-deps && cd app && yarn",
         "startdev": "DEV=1 electron app/main.js",
         "start": "electron app/main.js",
+        "docker:win": "./electron_docker.sh 'npx electron-builder -w portable'",
         "dist:mac": "npx electron-builder -m dmg",
         "dist:win": "npx electron-builder -w portable",
         "cleanup": "npx rimraf node_modules && cd app && npx rimraf node_modules"

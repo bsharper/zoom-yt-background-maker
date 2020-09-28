@@ -9,9 +9,10 @@
     },
     "author": "Brian Harper <bharper@gmail.com>",
     "license": "MIT",
-    "devDependencies": {},
+    "devDependencies": {
+        "electron": "^10.1.2"
+    },
     "dependencies": {
-        "electron": "^10.1.2",
         "@ffmpeg-installer/ffmpeg": "^1.0.20",
         "electron-log": "^4.2.0",
         "fluent-ffmpeg": "^2.1.2",
