@@ -10,13 +10,13 @@
     "author": "Brian Harper <bharper@gmail.com>",
     "license": "MIT",
     "devDependencies": {
-        "electron": "^10.1.2"
+        "electron": "^11.1.1"
     },
     "dependencies": {
         "@ffmpeg-installer/ffmpeg": "^1.0.20",
         "electron-log": "^4.2.0",
         "fluent-ffmpeg": "^2.1.2",
         "moment": "^2.29.0",
-        "ytdl-core": "^3.3.0"
+        "ytdl-core": "^4.4.0"
     }
 }
