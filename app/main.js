@@ -1,6 +1,30 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 
+ipcMain.handle('dialog:showSaveDialog', (event, options) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    return dialog.showSaveDialog(win, options)
+})
+ipcMain.handle('dialog:showOpenDialog', (event, options) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    return dialog.showOpenDialog(win, options)
+})
+ipcMain.handle('dialog:showMessageBox', (event, options) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    return dialog.showMessageBox(win, options)
+})
+ipcMain.handle('shell:showItemInFolder', (event, filePath) => {
+    if (typeof filePath !== 'string') return
+    shell.showItemInFolder(filePath)
+})
+ipcMain.handle('shell:beep', () => {
+    shell.beep()
+})
+ipcMain.handle('win:setProgressBar', (event, progress) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win) win.setProgressBar(progress)
+})
+
 function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 800,
@@ -14,25 +38,6 @@ function createWindow() {
     if (process.env['DEV']) mainWindow.openDevTools({ detached: true })
     mainWindow.setMenuBarVisibility(false)
     mainWindow.loadFile('index.html')
-
-    ipcMain.handle('dialog:showSaveDialog', (event, options) => {
-        return dialog.showSaveDialog(mainWindow, options)
-    })
-    ipcMain.handle('dialog:showOpenDialog', (event, options) => {
-        return dialog.showOpenDialog(mainWindow, options)
-    })
-    ipcMain.handle('dialog:showMessageBox', (event, options) => {
-        return dialog.showMessageBox(mainWindow, options)
-    })
-    ipcMain.handle('shell:showItemInFolder', (event, filePath) => {
-        shell.showItemInFolder(filePath)
-    })
-    ipcMain.handle('shell:beep', () => {
-        shell.beep()
-    })
-    ipcMain.handle('win:setProgressBar', (event, progress) => {
-        mainWindow.setProgressBar(progress)
-    })
 }
 
 app.whenReady().then(createWindow)

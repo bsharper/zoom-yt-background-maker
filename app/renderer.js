@@ -1,6 +1,5 @@
 const ytdl = require('ytdl-core');
 const fs = require('fs');
-const { shell } = require('electron');
 const path = require('path')
 const log = require('electron-log');
 const os = require('os')
@@ -272,7 +271,7 @@ async function done (lstatus, msgOpts) {
     if (r.response == 1) {
         setImmediate(() => {
             console.log(`Showing file "${fileLocation}"`)
-            shell.showItemInFolder(fileLocation);
+            window.electronAPI.showItemInFolder(fileLocation);
         })
     }
 
@@ -521,7 +520,7 @@ $(function () {
 
     $start.click(function () {
         if ($start.hasClass("disabled")) {
-            shell.beep();
+            window.electronAPI.beep();
             return;
         }
         setTimeout(() => {
