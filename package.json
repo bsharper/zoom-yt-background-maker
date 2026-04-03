@@ -16,9 +16,9 @@
     "author": "Brian Harper <bharper@gmail.com>",
     "license": "MIT",
     "devDependencies": {
-        "electron": "^12.2.3",
-        "electron-builder": "^22.14.8",
-        "electron-packager": "^15.2.0",
+        "electron": "^40.8.5",
+        "electron-builder": "^26.8.1",
+        "electron-packager": "^17.1.2",
         "rimraf": "^3.0.2"
     },
     "build": {
