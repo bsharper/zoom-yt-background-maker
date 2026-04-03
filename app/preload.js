@@ -1,12 +1,10 @@
-// All of the Node.js APIs are available in the preload process.
-// It has the same sandbox as a Chrome extension.
-// window.addEventListener('DOMContentLoaded', () => {
-//   const replaceText = (selector, text) => {
-//     const element = document.getElementById(selector)
-//     if (element) element.innerText = text
-//   }
+const { contextBridge, ipcRenderer } = require('electron')
 
-//   for (const type of ['chrome', 'node', 'electron']) {
-//     replaceText(`${type}-version`, process.versions[type])
-//   }
-// })
+contextBridge.exposeInMainWorld('electronAPI', {
+    showSaveDialog: (options) => ipcRenderer.invoke('dialog:showSaveDialog', options),
+    showOpenDialog: (options) => ipcRenderer.invoke('dialog:showOpenDialog', options),
+    showMessageBox: (options) => ipcRenderer.invoke('dialog:showMessageBox', options),
+    showItemInFolder: (filePath) => ipcRenderer.invoke('shell:showItemInFolder', filePath),
+    beep: () => ipcRenderer.invoke('shell:beep'),
+    setProgressBar: (progress) => ipcRenderer.invoke('win:setProgressBar', progress),
+})

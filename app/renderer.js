@@ -1,11 +1,8 @@
 const ytdl = require('ytdl-core');
 const fs = require('fs');
-const electron = require('electron');
-const dialog = electron.remote.dialog;
 const path = require('path')
 const log = require('electron-log');
 const os = require('os')
-const bWin = electron.remote.getCurrentWindow();
 const dirsep = path.sep;
 
 // const debounce = require('lodash/debounce');
@@ -73,9 +70,9 @@ function updateProgressbar(val) {
         $("#status").html(`${curStatus} (${parseInt(val)}%)`);
         var oval = val/100.0;
         if (currentStep == "download") {
-            bWin.setProgressBar(oval/2.0);
+            window.electronAPI.setProgressBar(oval/2.0);
         } else {
-            bWin.setProgressBar(0.5 + (oval/2.0));
+            window.electronAPI.setProgressBar(0.5 + (oval/2.0));
         }
     } catch (err) {
         pbarErr.push([err, val]);
@@ -262,7 +259,7 @@ async function done (lstatus, msgOpts) {
         defaultId:0
     }
     msgOpts = Object.assign({}, msgOpts, questOpts)
-    bWin.setProgressBar(-1);
+    window.electronAPI.setProgressBar(-1);
     status(lstatus);
     updateStep("done");
     toggleLoadingStatus(false);
@@ -270,18 +267,18 @@ async function done (lstatus, msgOpts) {
     $("#start").hide();
     $("#reload").fadeIn();
     await timeoutPromise(500);
-    var r = await dialog.showMessageBox(msgOpts);
+    var r = await window.electronAPI.showMessageBox(msgOpts);
     if (r.response == 1) {
         setImmediate(() => {
             console.log(`Showing file "${fileLocation}"`)
-            electron.shell.showItemInFolder(fileLocation);
+            window.electronAPI.showItemInFolder(fileLocation);
         })
     }
 
 }
 
 async function getSaveLocation (cb) {
-    var pr = await dialog.showSaveDialog({
+    var pr = await window.electronAPI.showSaveDialog({
         title: 'Filename for new video', 
         message: 'Enter the filename and location for the file being created',
         properties: ["showOverwriteConfirmation"]
@@ -338,7 +335,7 @@ const cancel = runonce(_cancel);
 function cancelConfirm() {
     if (cancelling) return;
     let st = "Cancel process?"
-    dialog.showMessageBox({title: st, message: st, detail: "This will stop the download and conversion process", type:"question", buttons: ["Yes, really stop", "Nevermind, continue"], cancelId: 1, defaultId:1}).then(r=> {
+    window.electronAPI.showMessageBox({title: st, message: st, detail: "This will stop the download and conversion process", type:"question", buttons: ["Yes, really stop", "Nevermind, continue"], cancelId: 1, defaultId:1}).then(r=> {
         console.log(`cancelConfirm response: ${r.response == 0 ? "really cancelling" : "not cancelling"}`)
         if (r.response == 0) {
             console.log(`cancelling process`);
@@ -390,7 +387,7 @@ function verifyLongVideo (duration) {
         let humanize = moment.duration(duration, 'seconds').humanize();
         let detailMsg = `The selected video is ${duration} seconds long (${humanize}). Downloading and converting long duration videos should work, but the download and conversion steps will take a while.`
         console.log(`verifyLongVideo message: ${detailMsg}`);
-        dialog.showMessageBox({title: st, message: st, detail: detailMsg, type:"question", buttons: ["Yes, download and convert this video", "No, let me find another video"], cancelId: 1, defaultId:1}).then(r=> {
+        window.electronAPI.showMessageBox({title: st, message: st, detail: detailMsg, type:"question", buttons: ["Yes, download and convert this video", "No, let me find another video"], cancelId: 1, defaultId:1}).then(r=> {
             console.log(`verifyLongVideo response: ${r.response == 1 ? "stop" : "continue"} (${r.response})`)
             if (r.response == 1) {
                 console.log(`cancelling process`);
@@ -471,7 +468,7 @@ function doubleClickYTURL() {
         console.log('Not in idle state')
         return;
     }
-    dialog.showOpenDialog({
+    window.electronAPI.showOpenDialog({
         title: 'Select local video file to convert',
         filters: dialogFilters
     }).then(r=> {
@@ -523,7 +520,7 @@ $(function () {
 
     $start.click(function () {
         if ($start.hasClass("disabled")) {
-            electron.shell.beep();
+            window.electronAPI.beep();
             return;
         }
         setTimeout(() => {
