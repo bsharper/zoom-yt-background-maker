@@ -1,21 +1,27 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 
+const ALLOWED_DIALOG_KEYS = ['title', 'message', 'detail', 'type', 'buttons', 'cancelId', 'defaultId', 'filters', 'properties', 'defaultPath']
+function sanitizeDialogOptions(options) {
+    if (!options || typeof options !== 'object') return {}
+    return Object.fromEntries(Object.entries(options).filter(([k]) => ALLOWED_DIALOG_KEYS.includes(k)))
+}
+
 ipcMain.handle('dialog:showSaveDialog', (event, options) => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    return dialog.showSaveDialog(win, options)
+    return dialog.showSaveDialog(win, sanitizeDialogOptions(options))
 })
 ipcMain.handle('dialog:showOpenDialog', (event, options) => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    return dialog.showOpenDialog(win, options)
+    return dialog.showOpenDialog(win, sanitizeDialogOptions(options))
 })
 ipcMain.handle('dialog:showMessageBox', (event, options) => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    return dialog.showMessageBox(win, options)
+    return dialog.showMessageBox(win, sanitizeDialogOptions(options))
 })
 ipcMain.handle('shell:showItemInFolder', (event, filePath) => {
     if (typeof filePath !== 'string') return
-    shell.showItemInFolder(filePath)
+    shell.showItemInFolder(path.normalize(filePath))
 })
 ipcMain.handle('shell:beep', () => {
     shell.beep()
